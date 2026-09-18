@@ -31,6 +31,20 @@ resource "google_compute_firewall" "fail_unrestricted_exact_rdp" {
   }
 }
 
+resource "google_compute_firewall" "fail_unrestricted_numeric_tcp_rdp" {
+  expect_failure = true
+  attrs = {
+    name          = "unrestricted-rdp-numeric-protocol"
+    network       = "default"
+    direction     = "INGRESS"
+    source_ranges = ["0.0.0.0/0"]
+    allow = [{
+      protocol = "6"
+      ports    = ["3389"]
+    }]
+  }
+}
+
 resource "google_compute_firewall" "fail_unrestricted_rdp_range" {
   expect_failure = true
   attrs = {
@@ -173,5 +187,34 @@ resource "google_compute_firewall" "pass_empty_source_ranges" {
       protocol = "tcp"
       ports    = ["3389"]
     }]
+  }
+}
+
+# ---------------------------------------------------------------------------
+# IPv6 coverage probe (PR #57 review finding 3b).
+# "::/0" is the IPv6 equivalent of "0.0.0.0/0" and exposes RDP to the entire
+# IPv6 internet. If these fail, the policy has a real IPv6 bypass.
+# ---------------------------------------------------------------------------
+
+resource "google_compute_firewall" "fail_unrestricted_ipv6_rdp" {
+  expect_failure = true
+  attrs = {
+    name          = "internet-rdp-ipv6"
+    network       = "default"
+    direction     = "INGRESS"
+    disabled      = false
+    source_ranges = ["::/0"]
+    allow         = [{ protocol = "tcp", ports = ["3389"] }]
+  }
+}
+
+resource "google_compute_firewall" "pass_trusted_ipv6_rdp" {
+  attrs = {
+    name          = "trusted-ipv6-rdp"
+    network       = "default"
+    direction     = "INGRESS"
+    disabled      = false
+    source_ranges = ["2001:db8::/32"]
+    allow         = [{ protocol = "tcp", ports = ["3389"] }]
   }
 }

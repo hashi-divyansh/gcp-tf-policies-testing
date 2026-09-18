@@ -11,6 +11,11 @@ policy {
   }
 }
 
+input "default-sa-scopes-enforcement-level" {
+  type    = string
+  default = "advisory"
+}
+
 resource_policy "google_compute_instance" "default_service_account_scopes" {
   locals {
     service_account_raw = core::try(attrs.service_account[0], attrs.service_account, null)
@@ -27,7 +32,7 @@ resource_policy "google_compute_instance" "default_service_account_scopes" {
     is_compliant          = !(local.uses_default_account && local.has_full_access)
   }
 
-  enforcement_level = "advisory"
+  enforcement_level = input.default-sa-scopes-enforcement-level
   enforce {
     condition     = local.is_compliant
     error_message = "Compute Engine instances must use a non-default service account or remove the cloud-platform OAuth scope."

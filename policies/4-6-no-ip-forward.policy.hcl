@@ -11,13 +11,18 @@ policy {
   }
 }
 
+input "no-ip-forward-enforcement-level" {
+  type    = string
+  default = "advisory"
+}
+
 resource_policy "google_compute_instance" "disable_ip_forwarding" {
   locals {
     can_ip_forward_raw = core::try(attrs.can_ip_forward, null)
     can_ip_forward     = local.can_ip_forward_raw == null ? false : local.can_ip_forward_raw
   }
 
-  enforcement_level = "advisory"
+  enforcement_level = input.no-ip-forward-enforcement-level
   enforce {
     condition     = !local.can_ip_forward
     error_message = "Compute Engine instances must set can_ip_forward to false or omit it. Set can_ip_forward = false and recreate the instance if necessary."

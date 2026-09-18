@@ -87,3 +87,42 @@ resource "google_project_iam_member" "pass_null_member" {
     member  = null
   }
 }
+
+# google_project_iam_policy is the authoritative IAM resource; its
+# bindings must be checked directly since it bypasses the binding/member
+# resource types entirely.
+resource "google_project_iam_policy" "pass_project_iam_policy_no_admin" {
+  attrs = {
+    project     = "test-project"
+    policy_data = "{\"bindings\":[{\"role\":\"roles/viewer\",\"members\":[\"serviceAccount:app@test-project.iam.gserviceaccount.com\"]}]}"
+  }
+}
+
+resource "google_project_iam_policy" "fail_project_iam_policy_owner" {
+  expect_failure = true
+  attrs = {
+    project     = "test-project"
+    policy_data = "{\"bindings\":[{\"role\":\"roles/owner\",\"members\":[\"serviceAccount:app@test-project.iam.gserviceaccount.com\"]}]}"
+  }
+}
+
+resource "google_project_iam_policy" "fail_project_iam_policy_admin_role" {
+  expect_failure = true
+  attrs = {
+    project     = "test-project"
+    policy_data = "{\"bindings\":[{\"role\":\"roles/iam.serviceAccountAdmin\",\"members\":[\"serviceAccount:app@test-project.iam.gserviceaccount.com\"]}]}"
+  }
+}
+
+resource "google_project_iam_policy" "pass_project_iam_policy_user_owner" {
+  attrs = {
+    project     = "test-project"
+    policy_data = "{\"bindings\":[{\"role\":\"roles/owner\",\"members\":[\"user:administrator@example.com\"]}]}"
+  }
+}
+
+resource "google_project_iam_policy" "pass_project_iam_policy_data_omitted" {
+  attrs = {
+    project = "test-project"
+  }
+}

@@ -11,6 +11,11 @@ policy {
   }
 }
 
+input "no-default-sa-enforcement-level" {
+  type    = string
+  default = "advisory"
+}
+
 resource_policy "google_compute_instance" "no_default_service_account" {
   locals {
     service_accounts_raw = core::try(attrs.service_account, null)
@@ -23,7 +28,7 @@ resource_policy "google_compute_instance" "no_default_service_account" {
     is_compliant         = local.has_service_account && local.has_email && !local.uses_default_account
   }
 
-  enforcement_level = "advisory"
+  enforcement_level = input.no-default-sa-enforcement-level
   enforce {
     condition     = local.is_compliant
     error_message = "Compute Engine instances must explicitly use a non-default service account. Configure service_account.email with a custom service account address."

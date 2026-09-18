@@ -11,6 +11,11 @@ policy {
   }
 }
 
+input "no-legacy-net-enforcement-level" {
+  type    = string
+  default = "advisory"
+}
+
 resource_policy "google_compute_network" "no_legacy_networks" {
   # gateway_ipv4 is computed/output-only and unresolved at create time, but the
   # provider has no argument left to create a legacy network anyway. This check
@@ -22,7 +27,7 @@ resource_policy "google_compute_network" "no_legacy_networks" {
     gateway_ipv4     = local.gateway_ipv4_raw != null ? local.gateway_ipv4_raw : ""
   }
 
-  enforcement_level = "advisory"
+  enforcement_level = input.no-legacy-net-enforcement-level
   enforce {
     condition     = local.gateway_ipv4 == ""
     error_message = "Legacy Google Compute networks are not permitted. Replace this network with an auto-mode or custom-mode VPC network."

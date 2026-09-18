@@ -21,7 +21,12 @@ resource "google_compute_instance" "pass_without_public_access" {
   }
 }
 
-resource "google_compute_instance" "pass_gke_exception" {
+resource "google_compute_instance" "fail_gke_named_instance_with_public_ip" {
+  # A hand-authored google_compute_instance cannot reliably prove it is an
+  # actual GKE-managed node (real GKE nodes come from managed instance
+  # groups, not directly authored resources), so a "gke-" name and
+  # "goog-gke-node" label must not exempt an instance from this control.
+  expect_failure = true
   attrs = {
     name         = "gke-cluster-default-pool-node"
     machine_type = "e2-micro"
@@ -117,7 +122,7 @@ resource "google_compute_instance" "fail_later_interface_public" {
   }
 }
 
-# Missing the optional labels attribute must not activate the GKE exception.
+# A "gke-" name prefix alone (without the label) must still fail.
 resource "google_compute_instance" "fail_gke_name_without_label" {
   expect_failure = true
   attrs = {
@@ -135,6 +140,7 @@ resource "google_compute_instance" "fail_gke_name_without_label" {
   }
 }
 
+# The "goog-gke-node" label alone (without the name prefix) must still fail.
 resource "google_compute_instance" "fail_gke_label_without_name_prefix" {
   expect_failure = true
   attrs = {

@@ -130,3 +130,56 @@ resource "google_project_iam_binding" "fail_cross_type_binding_user" {
     members = ["user:grace@example.com"]
   }
 }
+
+# PASS: An explicit `members = null` binding must not error and must not be
+# treated as if it granted access to anyone.
+resource "google_project_iam_binding" "pass_null_members" {
+  attrs = {
+    project = "pass-null-members"
+    role    = "roles/iam.serviceAccountAdmin"
+    members = null
+  }
+}
+
+# google_project_iam_policy is the authoritative IAM resource; both
+# separation-of-duties roles can appear in the very same policy_data
+# document and must be checked directly.
+resource "google_project_iam_policy" "pass_project_iam_policy_different_users" {
+  attrs = {
+    project     = "pass-policy-different-users"
+    policy_data = "{\"bindings\":[{\"role\":\"roles/iam.serviceAccountAdmin\",\"members\":[\"user:alice@example.com\"]},{\"role\":\"roles/iam.serviceAccountUser\",\"members\":[\"user:bob@example.com\"]}]}"
+  }
+}
+
+resource "google_project_iam_policy" "fail_project_iam_policy_same_user_both_roles" {
+  expect_failure = true
+  attrs = {
+    project     = "fail-policy-same-user"
+    policy_data = "{\"bindings\":[{\"role\":\"roles/iam.serviceAccountAdmin\",\"members\":[\"user:dana@example.com\"]},{\"role\":\"roles/iam.serviceAccountUser\",\"members\":[\"user:dana@example.com\"]}]}"
+  }
+}
+
+resource "google_project_iam_policy" "pass_project_iam_policy_data_omitted" {
+  attrs = {
+    project = "pass-policy-omitted"
+  }
+}
+
+# FAIL: Admin comes from a google_project_iam_policy and User comes from a
+# separate google_project_iam_binding in the same project.
+resource "google_project_iam_policy" "fail_cross_resource_policy_admin" {
+  expect_failure = true
+  attrs = {
+    project     = "fail-cross-policy-binding"
+    policy_data = "{\"bindings\":[{\"role\":\"roles/iam.serviceAccountAdmin\",\"members\":[\"user:heidi@example.com\"]}]}"
+  }
+}
+
+resource "google_project_iam_binding" "fail_cross_resource_binding_user" {
+  expect_failure = true
+  attrs = {
+    project = "fail-cross-policy-binding"
+    role    = "roles/iam.serviceAccountUser"
+    members = ["user:heidi@example.com"]
+  }
+}

@@ -11,6 +11,11 @@ policy {
   }
 }
 
+input "sa-no-admin-enforcement-level" {
+  type    = string
+  default = "advisory"
+}
+
 resource_policy "google_project_iam_binding" "service_accounts_must_not_have_admin_privileges" {
   locals {
     role_raw                = core::try(attrs.role, null)
@@ -21,7 +26,7 @@ resource_policy "google_project_iam_binding" "service_accounts_must_not_have_adm
     prohibited_role         = local.role == "roles/editor" || local.role == "roles/owner" || core::contains_substring(local.role, "Admin") || core::contains_substring(local.role, "admin")
   }
 
-  enforcement_level = "advisory"
+  enforcement_level = input.sa-no-admin-enforcement-level
   enforce {
     condition     = core::length(local.service_account_members) == 0 || !local.prohibited_role
     error_message = "Remove Owner, Editor, and roles containing Admin or admin from service accounts; grant a least-privilege role instead."
@@ -38,9 +43,48 @@ resource_policy "google_project_iam_member" "service_accounts_must_not_have_admi
     prohibited_role = local.role == "roles/editor" || local.role == "roles/owner" || core::contains_substring(local.role, "Admin") || core::contains_substring(local.role, "admin")
   }
 
-  enforcement_level = "advisory"
+  enforcement_level = input.sa-no-admin-enforcement-level
   enforce {
     condition     = !local.service_account || !local.prohibited_role
+    error_message = "Remove Owner, Editor, and roles containing Admin or admin from service accounts; grant a least-privilege role instead."
+  }
+}
+
+# google_project_iam_policy is the authoritative resource: it replaces the
+# entire project IAM policy, so its bindings must be checked directly (it
+# is not exchangeable with google_project_iam_binding/member resources).
+resource_policy "google_project_iam_policy" "service_accounts_must_not_have_admin_privileges" {
+  locals {
+    policy_data_raw = core::try(attrs.policy_data, null)
+    policy_doc      = core::try(core::jsondecode(core::try(local.policy_data_raw, "")), {})
+    bindings_raw    = core::try(local.policy_doc.bindings, null)
+    bindings        = local.bindings_raw != null ? local.bindings_raw : []
+  }
+
+  locals {
+    # Normalize each binding into a safe (role, members) tuple before
+    # checking it, so no downstream expression operates on a null value.
+    normalized_bindings = [for binding in local.bindings : {
+      role         = core::try(binding.role, "")
+      members_safe = core::try(binding.members, null) != null ? binding.members : []
+    }]
+  }
+
+  locals {
+    violations = [
+      for binding in local.normalized_bindings : binding
+      if (
+        binding.role == "roles/editor" ||
+        binding.role == "roles/owner" ||
+        core::contains_substring(binding.role, "Admin") ||
+        core::contains_substring(binding.role, "admin")
+      ) && core::length([for member in binding.members_safe : member if core::startswith(member, "serviceAccount:")]) > 0
+    ]
+  }
+
+  enforcement_level = input.sa-no-admin-enforcement-level
+  enforce {
+    condition     = core::length(local.violations) == 0
     error_message = "Remove Owner, Editor, and roles containing Admin or admin from service accounts; grant a least-privilege role instead."
   }
 }

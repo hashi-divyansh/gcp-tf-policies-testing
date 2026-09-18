@@ -129,3 +129,47 @@ resource "google_project_iam_member" "pass_null_member" {
     member  = null
   }
 }
+
+# google_project_iam_policy is the authoritative IAM resource; the Admin
+# role and a conflicting crypto role can appear in the very same
+# policy_data document and must be checked directly.
+resource "google_project_iam_policy" "pass_project_iam_policy_no_conflict" {
+  attrs = {
+    project     = "pass-policy-project"
+    policy_data = "{\"bindings\":[{\"role\":\"roles/cloudkms.admin\",\"members\":[\"user:admin-only@example.com\"]},{\"role\":\"roles/cloudkms.cryptoKeyDecrypter\",\"members\":[\"user:crypto-only@example.com\"]}]}"
+  }
+}
+
+resource "google_project_iam_policy" "fail_project_iam_policy_same_user_conflict" {
+  expect_failure = true
+  attrs = {
+    project     = "fail-policy-project"
+    policy_data = "{\"bindings\":[{\"role\":\"roles/cloudkms.admin\",\"members\":[\"user:conflict@example.com\"]},{\"role\":\"roles/cloudkms.cryptoKeyEncrypterDecrypter\",\"members\":[\"user:conflict@example.com\"]}]}"
+  }
+}
+
+resource "google_project_iam_policy" "pass_project_iam_policy_data_omitted" {
+  attrs = {
+    project = "pass-policy-omitted-project"
+  }
+}
+
+# FAIL: Admin comes from a google_project_iam_policy and the conflicting
+# crypto role comes from a separate google_project_iam_member in the same
+# project.
+resource "google_project_iam_policy" "fail_cross_resource_policy_admin" {
+  expect_failure = true
+  attrs = {
+    project     = "fail-cross-policy-member-project"
+    policy_data = "{\"bindings\":[{\"role\":\"roles/cloudkms.admin\",\"members\":[\"user:ivan@example.com\"]}]}"
+  }
+}
+
+resource "google_project_iam_member" "fail_cross_resource_member_crypto" {
+  expect_failure = true
+  attrs = {
+    project = "fail-cross-policy-member-project"
+    role    = "roles/cloudkms.cryptoKeyEncrypter"
+    member  = "user:ivan@example.com"
+  }
+}

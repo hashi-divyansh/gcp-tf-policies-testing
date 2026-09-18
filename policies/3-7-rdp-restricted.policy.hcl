@@ -11,6 +11,11 @@ policy {
   }
 }
 
+input "rdp-restricted-enforcement-level" {
+  type    = string
+  default = "advisory"
+}
+
 resource_policy "google_compute_firewall" "restrict_rdp_from_internet" {
   operations = ["create", "update"]
 
@@ -24,8 +29,8 @@ resource_policy "google_compute_firewall" "restrict_rdp_from_internet" {
     allow_rules_raw   = core::try(attrs.allow, null)
     allow_rules       = local.allow_rules_raw != null ? local.allow_rules_raw : []
 
-    # TCP and "all protocols" rules both expose RDP.
-    protocol_allow_rules = [for rule in local.allow_rules : rule if core::contains(["tcp", "all"], core::lower(core::try(rule.protocol, "")))]
+    # TCP (by name "tcp" or IP protocol number "6") and "all protocols" rules both expose RDP.
+    protocol_allow_rules = [for rule in local.allow_rules : rule if core::contains(["tcp", "6", "all"], core::lower(core::try(rule.protocol, "")))]
     rdp_allow_rules = [for rule in local.protocol_allow_rules : rule if
       core::length(core::try(rule.ports, null) != null ? rule.ports : []) == 0 ||
       core::length([for port in (core::try(rule.ports, null) != null ? rule.ports : []) : port if
@@ -36,10 +41,10 @@ resource_policy "google_compute_firewall" "restrict_rdp_from_internet" {
       ]) > 0
     ]
 
-    exposes_rdp = local.direction == "INGRESS" && !local.disabled && core::contains(local.source_ranges, "0.0.0.0/0") && core::length(local.rdp_allow_rules) > 0
+    exposes_rdp = local.direction == "INGRESS" && !local.disabled && (core::contains(local.source_ranges, "0.0.0.0/0") || core::contains(local.source_ranges, "::/0")) && core::length(local.rdp_allow_rules) > 0
   }
 
-  enforcement_level = "advisory"
+  enforcement_level = input.rdp-restricted-enforcement-level
   enforce {
     condition     = !local.exposes_rdp
     error_message = "RDP access on TCP port 3389 must not be allowed from 0.0.0.0/0. Replace the unrestricted source with specific trusted IPv4 addresses or CIDR ranges."

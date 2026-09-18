@@ -74,3 +74,35 @@ resource "google_project_iam_member" "pass_unrelated_role_for_user" {
     member  = "user:frank@example.com"
   }
 }
+
+# google_project_iam_policy is the authoritative IAM resource; its
+# bindings must be checked directly since it bypasses the binding/member
+# resource types entirely.
+resource "google_project_iam_policy" "fail_project_iam_policy_sa_user_role_for_user" {
+  expect_failure = true
+  attrs = {
+    project     = "example-project-id"
+    policy_data = "{\"bindings\":[{\"role\":\"roles/iam.serviceAccountUser\",\"members\":[\"user:alice@example.com\"]}]}"
+  }
+}
+
+resource "google_project_iam_policy" "fail_project_iam_policy_token_creator_for_user" {
+  expect_failure = true
+  attrs = {
+    project     = "example-project-id"
+    policy_data = "{\"bindings\":[{\"role\":\"roles/iam.serviceAccountTokenCreator\",\"members\":[\"serviceAccount:automation@example-project-id.iam.gserviceaccount.com\",\"user:bob@example.com\"]}]}"
+  }
+}
+
+resource "google_project_iam_policy" "pass_project_iam_policy_sa_user_for_service_account_only" {
+  attrs = {
+    project     = "example-project-id"
+    policy_data = "{\"bindings\":[{\"role\":\"roles/iam.serviceAccountUser\",\"members\":[\"serviceAccount:automation@example-project-id.iam.gserviceaccount.com\"]}]}"
+  }
+}
+
+resource "google_project_iam_policy" "pass_project_iam_policy_data_omitted" {
+  attrs = {
+    project = "example-project-id"
+  }
+}

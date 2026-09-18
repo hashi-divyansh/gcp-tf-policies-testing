@@ -11,6 +11,11 @@ policy {
   }
 }
 
+input "shielded-vm-enforcement-level" {
+  type    = string
+  default = "advisory"
+}
+
 resource_policy "google_compute_instance" "shielded_vm_enabled" {
   locals {
     shielded_config_raw = core::try(attrs.shielded_instance_config[0], attrs.shielded_instance_config, null)
@@ -31,7 +36,7 @@ resource_policy "google_compute_instance" "shielded_vm_enabled" {
     secure_boot     = local.secure_boot_raw == null ? false : local.secure_boot_raw
   }
 
-  enforcement_level = "advisory"
+  enforcement_level = input.shielded-vm-enforcement-level
   enforce {
     condition     = local.has_shielded_config && local.vtpm && local.integrity_monitoring && local.secure_boot
     error_message = "Compute instances must include shielded_instance_config with enable_secure_boot, enable_vtpm, and enable_integrity_monitoring set to true."

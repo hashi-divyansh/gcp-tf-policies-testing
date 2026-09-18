@@ -11,6 +11,11 @@ policy {
   }
 }
 
+input "block-ssh-keys-enforcement-level" {
+  type    = string
+  default = "advisory"
+}
+
 resource_policy "google_compute_instance" "block_project_wide_ssh_keys" {
   locals {
     metadata_raw               = core::try(attrs.metadata, null)
@@ -21,7 +26,7 @@ resource_policy "google_compute_instance" "block_project_wide_ssh_keys" {
     block_project_ssh_keys_set = local.block_project_ssh_keys_raw != null ? core::contains(["true", "y", "yes", "1"], core::lower(local.block_project_ssh_keys_raw)) : false
   }
 
-  enforcement_level = "advisory"
+  enforcement_level = input.block-ssh-keys-enforcement-level
   enforce {
     condition     = local.block_project_ssh_keys_set
     error_message = "Compute Engine instances must set metadata[\"block-project-ssh-keys\"] to a truthy value (true/TRUE/Y/Yes/1)."
