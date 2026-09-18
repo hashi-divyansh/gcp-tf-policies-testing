@@ -4,9 +4,10 @@
 # project if applied. Recommended: run `terraform plan` only. If you do
 # `apply`, run `terraform destroy` on these resources immediately after.
 #
-# Replace REPLACE_WITH_YOUR_EMAIL below with your own Google account email
-# if you want to actually `apply` this (a `terraform plan` works fine with
-# the placeholder left as-is).
+# The member identity comes from var.iam_test_user_email. GCP rejects a
+# binding whose `user:` principal does not exist, so this must be a real
+# Google account before `apply` will succeed. This policy only evaluates
+# members with the `user:` prefix, so a service account cannot be used.
 #
 # fail_sa_admin_and_user_conflict -> violates the policy (the same user holds
 #   both roles/iam.serviceAccountAdmin and roles/iam.serviceAccountUser)
@@ -16,17 +17,23 @@
 resource "google_project_iam_member" "fail_sa_admin_and_user_conflict" {
   project = "hc-f31985686df247b5bbd6a432306"
   role    = "roles/iam.serviceAccountAdmin"
-  member  = "user:REPLACE_WITH_YOUR_EMAIL@example.com"
+  member  = "user:${var.iam_test_user_email}"
 }
 
 resource "google_project_iam_member" "fail_sa_admin_and_user_conflict_2" {
   project = "hc-f31985686df247b5bbd6a432306"
   role    = "roles/iam.serviceAccountUser"
-  member  = "user:REPLACE_WITH_YOUR_EMAIL@example.com"
+  member  = "user:${var.iam_test_user_email}"
 }
 
+# Needs a principal distinct from var.iam_test_user_email: that identity is
+# already granted both conflicting roles above, so reusing it here would
+# duplicate fail_sa_admin_and_user_conflict instead of exercising the pass
+# path. Skipped when var.iam_test_user_email_alt is empty.
 resource "google_project_iam_member" "pass_sa_admin_only" {
+  count = var.iam_test_user_email_alt != "" ? 1 : 0
+
   project = "hc-f31985686df247b5bbd6a432306"
   role    = "roles/iam.serviceAccountAdmin"
-  member  = "user:another-user@example.com"
+  member  = "user:${var.iam_test_user_email_alt}"
 }
