@@ -16,11 +16,11 @@ resource "google_compute_instance" "pass_required_controls_enabled" {
     network_interface = {
       network = "default"
     }
-    shielded_instance_config = {
+    shielded_instance_config = [{
       enable_vtpm                 = true
       enable_integrity_monitoring = true
       enable_secure_boot          = true
-    }
+    }]
   }
 }
 
@@ -71,9 +71,9 @@ resource "google_compute_instance" "pass_partial_shielded_config_uses_defaults" 
     network_interface = {
       network = "default"
     }
-    shielded_instance_config = {
+    shielded_instance_config = [{
       enable_secure_boot = true
-    }
+    }]
   }
 }
 
@@ -90,11 +90,11 @@ resource "google_compute_instance" "fail_vtpm_disabled" {
     network_interface = {
       network = "default"
     }
-    shielded_instance_config = {
+    shielded_instance_config = [{
       enable_vtpm                 = false
       enable_integrity_monitoring = true
       enable_secure_boot          = true
-    }
+    }]
   }
 }
 
@@ -111,11 +111,11 @@ resource "google_compute_instance" "fail_integrity_monitoring_disabled" {
     network_interface = {
       network = "default"
     }
-    shielded_instance_config = {
+    shielded_instance_config = [{
       enable_vtpm                 = true
       enable_integrity_monitoring = false
       enable_secure_boot          = true
-    }
+    }]
   }
 }
 
@@ -134,10 +134,10 @@ resource "google_compute_instance" "fail_secure_boot_disabled" {
     network_interface = {
       network = "default"
     }
-    shielded_instance_config = {
+    shielded_instance_config = [{
       enable_vtpm                 = true
       enable_integrity_monitoring = true
       enable_secure_boot          = false
-    }
+    }]
   }
 }

@@ -88,9 +88,9 @@ resource "google_project_iam_member" "pass_null_member" {
   }
 }
 
-# google_project_iam_policy is the authoritative IAM resource; its
-# bindings must be checked directly since it bypasses the binding/member
-# resource types entirely.
+# google_project_iam_policy is authoritative: it replaces the entire
+# project IAM policy, so its bindings must be checked directly rather
+# than through google_project_iam_binding/member.
 resource "google_project_iam_policy" "pass_project_iam_policy_no_admin" {
   attrs = {
     project     = "test-project"

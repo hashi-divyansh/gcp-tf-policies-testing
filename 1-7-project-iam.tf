@@ -9,17 +9,14 @@
 # Google account before `apply` will succeed. This policy only evaluates
 # members with the `user:` prefix, so a service account cannot be used.
 #
-# fail_user_has_sa_user_role -> violates the policy (user granted
-#                               roles/iam.serviceAccountUser at project level)
-# pass_user_has_viewer_role  -> complies with the policy (unrelated role)
-
-resource "google_project_iam_member" "fail_user_has_sa_user_role" {
-  project = "hc-f31985686df247b5bbd6a432306"
-  role    = "roles/iam.serviceAccountUser"
-  member  = "user:${var.iam_test_user_email}"
-}
+# fail_sa_admin_and_user_conflict_2 in 1-9-sa-separation.tf also exercises
+# this policy's failure path. Defining the same project, role, and member
+# twice would make two Terraform resources manage one GCP IAM membership.
+# pass_user_has_viewer_role complies with the policy (unrelated role).
 
 resource "google_project_iam_member" "pass_user_has_viewer_role" {
+  depends_on = [google_project_iam_member.pass_sa_has_viewer_role]
+
   project = "hc-f31985686df247b5bbd6a432306"
   role    = "roles/viewer"
   member  = "user:${var.iam_test_user_email}"

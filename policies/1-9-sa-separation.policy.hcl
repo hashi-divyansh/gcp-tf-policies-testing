@@ -101,11 +101,12 @@ resource_policy "google_project_iam_member" "enforce_service_account_role_separa
   }
 }
 
-# google_project_iam_policy is the authoritative resource: it replaces the
-# entire project IAM policy in one shot, so both roles can appear in the
-# very same policy_data document. Its bindings must be decoded and checked
-# both against each other and against any google_project_iam_binding/member
-# resources declared for the same project.
+# google_project_iam_policy is authoritative: it replaces the entire
+# project IAM policy, so its bindings must be checked directly rather
+# than through google_project_iam_binding/member.
+# Both conflicting roles can appear in a single policy_data document, so
+# these grants are also cross-checked against binding and member
+# resources for the same project.
 resource_policy "google_project_iam_policy" "enforce_service_account_role_separation" {
   locals {
     project         = core::try(attrs.project, "")

@@ -17,9 +17,9 @@ resource "google_compute_instance" "pass_confidential_computing_enabled" {
     network_interface = {
       network = "default"
     }
-    confidential_instance_config = {
+    confidential_instance_config = [{
       enable_confidential_compute = true
-    }
+    }]
   }
 }
 
@@ -40,11 +40,10 @@ resource "google_compute_instance" "fail_missing_confidential_config" {
   }
 }
 
-resource "google_compute_instance" "fail_missing_enable_attribute" {
-  expect_failure = true
+resource "google_compute_instance" "pass_confidential_instance_type_only" {
   attrs = {
-    name         = "fail-missing-enable-attribute"
-    machine_type = "n2d-standard-2"
+    name         = "pass-confidential-type-only"
+    machine_type = "c3-standard-4"
     zone         = "us-central1-a"
     boot_disk = {
       initialize_params = {
@@ -54,14 +53,15 @@ resource "google_compute_instance" "fail_missing_enable_attribute" {
     network_interface = {
       network = "default"
     }
-    confidential_instance_config = {}
+    confidential_instance_config = [{
+      confidential_instance_type = "TDX"
+    }]
   }
 }
 
-resource "google_compute_instance" "fail_null_enable_attribute" {
-  expect_failure = true
+resource "google_compute_instance" "pass_null_legacy_flag_with_type" {
   attrs = {
-    name         = "fail-null-enable-attribute"
+    name         = "pass-null-legacy-flag"
     machine_type = "n2d-standard-2"
     zone         = "us-central1-a"
     boot_disk = {
@@ -72,9 +72,29 @@ resource "google_compute_instance" "fail_null_enable_attribute" {
     network_interface = {
       network = "default"
     }
-    confidential_instance_config = {
+    confidential_instance_config = [{
       enable_confidential_compute = null
+      confidential_instance_type  = "SEV_SNP"
+    }]
+  }
+}
+
+resource "google_compute_instance" "pass_sev_instance_type" {
+  attrs = {
+    name         = "pass-sev-instance-type"
+    machine_type = "c2d-standard-4"
+    zone         = "us-central1-a"
+    boot_disk = {
+      initialize_params = {
+        image = "debian-cloud/debian-12"
+      }
     }
+    network_interface = {
+      network = "default"
+    }
+    confidential_instance_config = [{
+      confidential_instance_type = "SEV"
+    }]
   }
 }
 
@@ -92,9 +112,9 @@ resource "google_compute_instance" "fail_confidential_computing_disabled" {
     network_interface = {
       network = "default"
     }
-    confidential_instance_config = {
+    confidential_instance_config = [{
       enable_confidential_compute = false
-    }
+    }]
   }
 }
 
@@ -131,9 +151,9 @@ resource "google_compute_instance" "pass_c2d_case_insensitive_match" {
     network_interface = {
       network = "default"
     }
-    confidential_instance_config = {
+    confidential_instance_config = [{
       enable_confidential_compute = true
-    }
+    }]
   }
 }
 
@@ -150,9 +170,9 @@ resource "google_compute_instance" "pass_c3d_confidential_enabled" {
     network_interface = {
       network = "default"
     }
-    confidential_instance_config = {
+    confidential_instance_config = [{
       enable_confidential_compute = true
-    }
+    }]
   }
 }
 
@@ -188,9 +208,9 @@ resource "google_compute_instance" "pass_c3_confidential_enabled" {
     network_interface = {
       network = "default"
     }
-    confidential_instance_config = {
+    confidential_instance_config = [{
       enable_confidential_compute = true
-    }
+    }]
   }
 }
 
@@ -199,6 +219,87 @@ resource "google_compute_instance" "fail_c4_missing_confidential_config" {
   attrs = {
     name         = "fail-c4-missing-confidential-config"
     machine_type = "c4-standard-4"
+    zone         = "us-central1-a"
+    boot_disk = {
+      initialize_params = {
+        image = "debian-cloud/debian-12"
+      }
+    }
+    network_interface = {
+      network = "default"
+    }
+  }
+}
+
+resource "google_compute_instance" "pass_c3_highcpu_without_confidential_config" {
+  attrs = {
+    name         = "pass-c3-highcpu"
+    machine_type = "c3-highcpu-8"
+    zone         = "us-central1-a"
+    boot_disk = {
+      initialize_params = {
+        image = "debian-cloud/debian-12"
+      }
+    }
+    network_interface = {
+      network = "default"
+    }
+  }
+}
+
+resource "google_compute_instance" "pass_c4_highmem_without_confidential_config" {
+  attrs = {
+    name         = "pass-c4-highmem"
+    machine_type = "c4-highmem-8"
+    zone         = "us-central1-a"
+    boot_disk = {
+      initialize_params = {
+        image = "debian-cloud/debian-12"
+      }
+    }
+    network_interface = {
+      network = "default"
+    }
+  }
+}
+
+resource "google_compute_instance" "pass_c4d_bare_metal_without_confidential_config" {
+  attrs = {
+    name         = "pass-c4d-bare-metal"
+    machine_type = "c4d-standard-384-metal"
+    zone         = "us-central1-a"
+    boot_disk = {
+      initialize_params = {
+        image = "debian-cloud/debian-12"
+      }
+    }
+    network_interface = {
+      network = "default"
+    }
+  }
+}
+
+resource "google_compute_instance" "pass_c4d_384_vcpu_without_confidential_config" {
+  attrs = {
+    name         = "pass-c4d-384-vcpu"
+    machine_type = "c4d-highcpu-384"
+    zone         = "us-central1-a"
+    boot_disk = {
+      initialize_params = {
+        image = "debian-cloud/debian-12"
+      }
+    }
+    network_interface = {
+      network = "default"
+    }
+  }
+}
+
+resource "google_compute_instance" "fail_c3_standard_url_missing_confidential_config" {
+  expect_failure = true
+  attrs = {
+    name         = "fail-c3-standard-url"
+    machine_type = "https://www.googleapis.com/compute/v1/projects/test-project/zones/us-central1-a/machineTypes/c3-standard-4"
     zone         = "us-central1-a"
     boot_disk = {
       initialize_params = {

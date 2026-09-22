@@ -15,12 +15,16 @@
 #   the two conflicting roles)
 
 resource "google_project_iam_member" "fail_sa_admin_and_user_conflict" {
+  depends_on = [google_project_iam_member.pass_user_has_viewer_role]
+
   project = "hc-f31985686df247b5bbd6a432306"
   role    = "roles/iam.serviceAccountAdmin"
   member  = "user:${var.iam_test_user_email}"
 }
 
 resource "google_project_iam_member" "fail_sa_admin_and_user_conflict_2" {
+  depends_on = [google_project_iam_member.fail_sa_admin_and_user_conflict]
+
   project = "hc-f31985686df247b5bbd6a432306"
   role    = "roles/iam.serviceAccountUser"
   member  = "user:${var.iam_test_user_email}"
@@ -32,6 +36,8 @@ resource "google_project_iam_member" "fail_sa_admin_and_user_conflict_2" {
 # path. Skipped when var.iam_test_user_email_alt is empty.
 resource "google_project_iam_member" "pass_sa_admin_only" {
   count = var.iam_test_user_email_alt != "" ? 1 : 0
+
+  depends_on = [google_project_iam_member.fail_sa_admin_and_user_conflict_2]
 
   project = "hc-f31985686df247b5bbd6a432306"
   role    = "roles/iam.serviceAccountAdmin"

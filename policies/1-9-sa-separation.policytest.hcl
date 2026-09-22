@@ -4,7 +4,8 @@ policytest {
   targets = ["1-9-sa-separation.policy.hcl"]
 }
 
-# PASS: Each role may be assigned individually to different users in one project.
+# PASS: Each role may be assigned individually to different users in one
+# project.
 resource "google_project_iam_binding" "pass_admin_for_alice" {
   attrs = {
     project = "pass-different-users"
@@ -141,9 +142,10 @@ resource "google_project_iam_binding" "pass_null_members" {
   }
 }
 
-# google_project_iam_policy is the authoritative IAM resource; both
-# separation-of-duties roles can appear in the very same policy_data
-# document and must be checked directly.
+# google_project_iam_policy is authoritative: it replaces the entire
+# project IAM policy, so its bindings must be checked directly rather
+# than through google_project_iam_binding/member.
+# Both conflicting roles can appear in a single policy_data document.
 resource "google_project_iam_policy" "pass_project_iam_policy_different_users" {
   attrs = {
     project     = "pass-policy-different-users"

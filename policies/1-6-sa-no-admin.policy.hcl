@@ -50,9 +50,9 @@ resource_policy "google_project_iam_member" "service_accounts_must_not_have_admi
   }
 }
 
-# google_project_iam_policy is the authoritative resource: it replaces the
-# entire project IAM policy, so its bindings must be checked directly (it
-# is not exchangeable with google_project_iam_binding/member resources).
+# google_project_iam_policy is authoritative: it replaces the entire
+# project IAM policy, so its bindings must be checked directly rather
+# than through google_project_iam_binding/member.
 resource_policy "google_project_iam_policy" "service_accounts_must_not_have_admin_privileges" {
   locals {
     policy_data_raw = core::try(attrs.policy_data, null)

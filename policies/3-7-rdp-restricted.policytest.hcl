@@ -190,31 +190,62 @@ resource "google_compute_firewall" "pass_empty_source_ranges" {
   }
 }
 
-# ---------------------------------------------------------------------------
-# IPv6 coverage probe (PR #57 review finding 3b).
-# "::/0" is the IPv6 equivalent of "0.0.0.0/0" and exposes RDP to the entire
-# IPv6 internet. If these fail, the policy has a real IPv6 bypass.
-# ---------------------------------------------------------------------------
-
+# source_ranges accepts IPv6 as well as IPv4, so "::/0" is just as open to
+# the internet as "0.0.0.0/0".
 resource "google_compute_firewall" "fail_unrestricted_ipv6_rdp" {
   expect_failure = true
   attrs = {
-    name          = "internet-rdp-ipv6"
+    name          = "ipv6-internet-rdp"
     network       = "default"
     direction     = "INGRESS"
-    disabled      = false
     source_ranges = ["::/0"]
-    allow         = [{ protocol = "tcp", ports = ["3389"] }]
+    allow = [{
+      protocol = "tcp"
+      ports    = ["3389"]
+    }]
   }
 }
 
-resource "google_compute_firewall" "pass_trusted_ipv6_rdp" {
+# Non-canonical spellings of the all-addresses range are matched on their
+# "/0" prefix length rather than on the literal address text.
+resource "google_compute_firewall" "fail_unrestricted_ipv6_expanded_rdp" {
+  expect_failure = true
+  attrs = {
+    name          = "ipv6-expanded-internet-rdp"
+    network       = "default"
+    direction     = "INGRESS"
+    source_ranges = ["0:0:0:0:0:0:0:0/0"]
+    allow = [{
+      protocol = "tcp"
+      ports    = ["3389"]
+    }]
+  }
+}
+
+resource "google_compute_firewall" "fail_unrestricted_dual_stack_rdp" {
+  expect_failure = true
+  attrs = {
+    name          = "dual-stack-internet-rdp"
+    network       = "default"
+    direction     = "INGRESS"
+    source_ranges = ["0.0.0.0/0", "::/0"]
+    allow = [{
+      protocol = "tcp"
+      ports    = ["3389"]
+    }]
+  }
+}
+
+# A bounded IPv6 prefix is not unrestricted and must still pass.
+resource "google_compute_firewall" "pass_trusted_ipv6_range_rdp" {
   attrs = {
     name          = "trusted-ipv6-rdp"
     network       = "default"
     direction     = "INGRESS"
-    disabled      = false
     source_ranges = ["2001:db8::/32"]
-    allow         = [{ protocol = "tcp", ports = ["3389"] }]
+    allow = [{
+      protocol = "tcp"
+      ports    = ["3389"]
+    }]
   }
 }

@@ -1,6 +1,6 @@
 # Copyright IBM Corp. 2026
 
-# 3.2 Ensure Legacy Networks Do Not Exist for Older Projects (Automated)
+# Ensure Legacy Networks Do Not Exist for Older Projects
 
 policy {
   required_providers {

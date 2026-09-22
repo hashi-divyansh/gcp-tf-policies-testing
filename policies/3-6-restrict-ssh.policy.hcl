@@ -1,6 +1,6 @@
 # Copyright IBM Corp. 2026
 
-# 3.6 Ensure That SSH Access Is Restricted From the Internet (Automated)
+# Ensure That SSH Access Is Restricted From the Internet
 
 policy {
   required_providers {
@@ -32,10 +32,13 @@ resource_policy "google_compute_firewall" "restrict_ssh_from_internet" {
       protocol = core::try(a.protocol, null) != null ? core::lower(a.protocol) : ""
       ports    = core::try(a.ports, null) != null ? a.ports : []
     }]
-    # source_ranges accepts IPv4 or IPv6 CIDRs; "::/0" is the IPv6
-    # equivalent of "0.0.0.0/0" and exposes the port to the whole internet.
-    unrestricted     = core::contains(local.source_ranges, "0.0.0.0/0") || core::contains(local.source_ranges, "::/0")
-    # "tcp" or its IP protocol number "6" both match TCP traffic; "all" covers every protocol.
+    # A /0 prefix covers the entire address space whatever address precedes
+    # it, so matching on prefix length catches every spelling of "open to
+    # the internet" in both families: 0.0.0.0/0, ::/0, 0::/0, ::0/0.
+    # Known gap: split ranges (0.0.0.0/1 + 128.0.0.0/1) are not detected.
+    unrestricted     = core::length([for r in local.source_ranges : r if core::endswith(core::trimspace(r), "/0")]) > 0
+    # "tcp" or its IP protocol number "6" both match TCP traffic;
+    # "all" covers every protocol.
     ssh_allow_rules   = [for a in local.allow_rules : a if core::contains(["tcp", "6", "all"], a.protocol) && (core::length(a.ports) == 0 || core::length([for p in a.ports : p if p == "22" || (core::length(core::split("-", p)) == 2 && core::try(core::parseint(core::try(core::split("-", p)[0], ""), 10), -1) <= 22 && core::try(core::parseint(core::try(core::split("-", p)[1], ""), 10), -1) >= 22)]) > 0)]
     exposes_ssh       = core::length(local.ssh_allow_rules) > 0
     compliant         = local.disabled || local.direction != "INGRESS" || !local.unrestricted || !local.exposes_ssh
@@ -44,6 +47,6 @@ resource_policy "google_compute_firewall" "restrict_ssh_from_internet" {
   enforcement_level = input.restrict-ssh-enforcement-level
   enforce {
     condition     = local.compliant
-    error_message = "Firewall rules must not allow SSH from 0.0.0.0/0. Replace the unrestricted source range with specific trusted source ranges."
+    error_message = "Firewall rules must not allow SSH from an unrestricted source range such as 0.0.0.0/0 or ::/0. Replace it with specific trusted source ranges."
   }
 }

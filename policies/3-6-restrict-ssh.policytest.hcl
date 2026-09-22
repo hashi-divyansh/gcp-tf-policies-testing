@@ -140,20 +140,12 @@ resource "google_compute_firewall" "pass_null_allow" {
   }
 }
 
-# ---------------------------------------------------------------------------
-# IPv6 coverage probe (PR #57 review finding 3b).
-#
-# google_compute_firewall.source_ranges accepts IPv4 *or* IPv6 CIDRs, so
-# "::/0" is the IPv6 equivalent of "0.0.0.0/0" and exposes SSH to the entire
-# IPv6 internet. These fixtures assert the behaviour we believe is correct
-# (unrestricted IPv6 SSH must be flagged). If they fail, the policy has a
-# real IPv6 bypass.
-# ---------------------------------------------------------------------------
-
-resource "google_compute_firewall" "fail_unrestricted_ipv6_tcp_22" {
+# source_ranges accepts IPv6 as well as IPv4, so "::/0" is just as open to
+# the internet as "0.0.0.0/0".
+resource "google_compute_firewall" "fail_unrestricted_ipv6" {
   expect_failure = true
   attrs = {
-    name          = "internet-ssh-ipv6"
+    name          = "ipv6-internet-ssh"
     network       = "default"
     direction     = "INGRESS"
     disabled      = false
@@ -162,10 +154,24 @@ resource "google_compute_firewall" "fail_unrestricted_ipv6_tcp_22" {
   }
 }
 
-resource "google_compute_firewall" "fail_unrestricted_dual_stack_tcp_22" {
+# Non-canonical spellings of the all-addresses range are matched on their
+# "/0" prefix length rather than on the literal address text.
+resource "google_compute_firewall" "fail_unrestricted_ipv6_expanded" {
   expect_failure = true
   attrs = {
-    name          = "internet-ssh-dual-stack"
+    name          = "ipv6-expanded-internet-ssh"
+    network       = "default"
+    direction     = "INGRESS"
+    disabled      = false
+    source_ranges = ["0:0:0:0:0:0:0:0/0"]
+    allow         = [{ protocol = "tcp", ports = ["22"] }]
+  }
+}
+
+resource "google_compute_firewall" "fail_unrestricted_dual_stack" {
+  expect_failure = true
+  attrs = {
+    name          = "dual-stack-internet-ssh"
     network       = "default"
     direction     = "INGRESS"
     disabled      = false
@@ -174,7 +180,8 @@ resource "google_compute_firewall" "fail_unrestricted_dual_stack_tcp_22" {
   }
 }
 
-resource "google_compute_firewall" "pass_trusted_ipv6_tcp_22" {
+# A bounded IPv6 prefix is not unrestricted and must still pass.
+resource "google_compute_firewall" "pass_trusted_ipv6_range" {
   attrs = {
     name          = "trusted-ipv6-ssh"
     network       = "default"

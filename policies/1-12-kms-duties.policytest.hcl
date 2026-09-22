@@ -130,9 +130,11 @@ resource "google_project_iam_member" "pass_null_member" {
   }
 }
 
-# google_project_iam_policy is the authoritative IAM resource; the Admin
-# role and a conflicting crypto role can appear in the very same
-# policy_data document and must be checked directly.
+# google_project_iam_policy is authoritative: it replaces the entire
+# project IAM policy, so its bindings must be checked directly rather
+# than through google_project_iam_binding/member.
+# The Admin role and a conflicting crypto role can appear in a single
+# policy_data document.
 resource "google_project_iam_policy" "pass_project_iam_policy_no_conflict" {
   attrs = {
     project     = "pass-policy-project"

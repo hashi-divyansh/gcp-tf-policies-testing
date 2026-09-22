@@ -30,10 +30,10 @@ resource_policy "google_compute_instance" "serial_port_access_disabled" {
     metadata               = local.metadata_raw != null ? local.metadata_raw : {}
     serial_port_enable_raw = core::try(local.metadata["serial-port-enable"], null)
     # GCP metadata booleans are case-insensitive and accept several falsy
-    # aliases (false, N, No, 0); the ternary below avoids calling
-    # core::lower on a null value. Any explicitly-set, non-falsy value
-    # (including unrecognized strings) is conservatively treated as
-    # enabling serial port access, matching CIS control intent.
+    # aliases (false, N, No, 0). The null guard must be a ternary:
+    # core::lower errors on null and this DSL's && evaluates both operands.
+    # Any explicitly-set, non-falsy value (including an unrecognized
+    # string) counts as enabling serial port access, matching CIS intent.
     instance_key_disabled = local.serial_port_enable_raw == null ? false : core::contains(["false", "n", "no", "0"], core::lower(local.serial_port_enable_raw))
 
     instance_project_raw = core::try(attrs.project, null)
@@ -41,9 +41,9 @@ resource_policy "google_compute_instance" "serial_port_access_disabled" {
   }
 
   locals {
-    # Normalize both project-metadata resource types into safe (project, key,
-    # value) tuples before evaluating them, so no step calls core::lower on a
-    # potentially null value.
+    # google_compute_project_metadata carries a metadata map, while
+    # google_compute_project_metadata_item carries a flat key/value pair.
+    # Normalize both into a common shape before matching them on project.
     project_metadata_safe = [for r in local.project_metadata_resources : {
       project  = core::try(r.project, null) != null ? r.project : ""
       metadata = core::try(r.metadata, null) != null ? r.metadata : {}
@@ -63,12 +63,6 @@ resource_policy "google_compute_instance" "serial_port_access_disabled" {
   }
 
   locals {
-    # Project-wide metadata (from either resource type, scoped to the same
-    # project as this instance) propagates to every instance that omits its
-    # own "serial-port-enable" key; an explicit instance-level value
-    # overrides the inherited project-level value. Any explicitly-set,
-    # non-falsy project-level value is conservatively treated as enabling,
-    # matching the instance-level semantics above.
     project_metadata_enables_serial_port = core::length([
       for e in local.project_metadata_values : e
       if e.project == local.instance_project && (e.value_raw == null ? false : !core::contains(["false", "n", "no", "0"], core::lower(e.value_raw)))
@@ -81,10 +75,8 @@ resource_policy "google_compute_instance" "serial_port_access_disabled" {
 
     project_serial_port_enabled = local.project_metadata_enables_serial_port || local.project_metadata_item_enables_serial_port
 
-    # If the instance sets its own key, that value alone decides the
-    # outcome (an explicit value overrides project-level inheritance,
-    # whichever direction it goes). Otherwise, inherit the project-wide
-    # value.
+    # An explicit instance-level key overrides the project-wide value in
+    # either direction; only an instance that omits the key inherits.
     serial_port_disabled = local.serial_port_enable_raw != null ? local.instance_key_disabled : !local.project_serial_port_enabled
   }
 

@@ -22,7 +22,8 @@ resource_policy "google_compute_instance" "block_project_wide_ssh_keys" {
     metadata                   = local.metadata_raw != null ? local.metadata_raw : {}
     block_project_ssh_keys_raw = core::try(local.metadata["block-project-ssh-keys"], null)
     # GCP metadata booleans are case-insensitive with truthy aliases
-    # (TRUE, Y, Yes, 1); ternary avoids calling core::lower on null.
+    # (TRUE, Y, Yes, 1). The null guard must be a ternary: core::lower
+    # errors on null and this DSL's && evaluates both operands.
     block_project_ssh_keys_set = local.block_project_ssh_keys_raw != null ? core::contains(["true", "y", "yes", "1"], core::lower(local.block_project_ssh_keys_raw)) : false
   }
 

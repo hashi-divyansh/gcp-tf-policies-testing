@@ -75,9 +75,9 @@ resource "google_project_iam_member" "pass_unrelated_role_for_user" {
   }
 }
 
-# google_project_iam_policy is the authoritative IAM resource; its
-# bindings must be checked directly since it bypasses the binding/member
-# resource types entirely.
+# google_project_iam_policy is authoritative: it replaces the entire
+# project IAM policy, so its bindings must be checked directly rather
+# than through google_project_iam_binding/member.
 resource "google_project_iam_policy" "fail_project_iam_policy_sa_user_role_for_user" {
   expect_failure = true
   attrs = {

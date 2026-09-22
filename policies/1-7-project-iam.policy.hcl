@@ -58,9 +58,9 @@ resource_policy "google_project_iam_member" "deny_project_level_service_account_
   }
 }
 
-# google_project_iam_policy is the authoritative resource: it replaces the
-# entire project IAM policy, so its bindings must be checked directly (it
-# is not exchangeable with google_project_iam_binding/member resources).
+# google_project_iam_policy is authoritative: it replaces the entire
+# project IAM policy, so its bindings must be checked directly rather
+# than through google_project_iam_binding/member.
 resource_policy "google_project_iam_policy" "deny_project_level_service_account_roles_for_users" {
   locals {
     prohibited_roles = [

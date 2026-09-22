@@ -16,6 +16,8 @@ resource "google_project_iam_member" "fail_sa_has_admin_role" {
 }
 
 resource "google_project_iam_member" "pass_sa_has_viewer_role" {
+  depends_on = [google_project_iam_member.fail_sa_has_admin_role]
+
   project = "hc-f31985686df247b5bbd6a432306"
   role    = "roles/viewer"
   member  = "serviceAccount:hcp-terraform-runner@hc-f31985686df247b5bbd6a432306.iam.gserviceaccount.com"

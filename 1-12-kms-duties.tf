@@ -15,12 +15,16 @@
 #   of the two conflicting roles)
 
 resource "google_project_iam_member" "fail_kms_admin_and_crypto_conflict" {
+  depends_on = [google_project_iam_member.pass_sa_admin_only]
+
   project = "hc-f31985686df247b5bbd6a432306"
   role    = "roles/cloudkms.admin"
   member  = "user:${var.iam_test_user_email}"
 }
 
 resource "google_project_iam_member" "fail_kms_admin_and_crypto_conflict_2" {
+  depends_on = [google_project_iam_member.fail_kms_admin_and_crypto_conflict]
+
   project = "hc-f31985686df247b5bbd6a432306"
   role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member  = "user:${var.iam_test_user_email}"
@@ -32,6 +36,8 @@ resource "google_project_iam_member" "fail_kms_admin_and_crypto_conflict_2" {
 # path. Skipped when var.iam_test_user_email_alt is empty.
 resource "google_project_iam_member" "pass_kms_admin_only" {
   count = var.iam_test_user_email_alt != "" ? 1 : 0
+
+  depends_on = [google_project_iam_member.fail_kms_admin_and_crypto_conflict_2]
 
   project = "hc-f31985686df247b5bbd6a432306"
   role    = "roles/cloudkms.admin"
