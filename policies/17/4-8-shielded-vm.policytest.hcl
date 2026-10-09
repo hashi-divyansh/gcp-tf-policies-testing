@@ -8,14 +8,14 @@ resource "google_compute_instance" "pass_required_controls_enabled" {
   attrs = {
     name         = "pass-required-controls-enabled"
     machine_type = "e2-micro"
-    boot_disk = {
-      initialize_params = {
+    boot_disk = [{
+      initialize_params = [{
         image = "debian-cloud/debian-12"
-      }
-    }
-    network_interface = {
+      }]
+    }]
+    network_interface = [{
       network = "default"
-    }
+    }]
     shielded_instance_config = [{
       enable_vtpm                 = true
       enable_integrity_monitoring = true
@@ -29,14 +29,14 @@ resource "google_compute_instance" "fail_missing_shielded_config" {
   attrs = {
     name         = "fail-missing-shielded-config"
     machine_type = "e2-micro"
-    boot_disk = {
-      initialize_params = {
+    boot_disk = [{
+      initialize_params = [{
         image = "debian-cloud/debian-12"
-      }
-    }
-    network_interface = {
+      }]
+    }]
+    network_interface = [{
       network = "default"
-    }
+    }]
   }
 }
 
@@ -45,14 +45,14 @@ resource "google_compute_instance" "fail_null_shielded_config" {
   attrs = {
     name         = "fail-null-shielded-config"
     machine_type = "e2-micro"
-    boot_disk = {
-      initialize_params = {
+    boot_disk = [{
+      initialize_params = [{
         image = "debian-cloud/debian-12"
-      }
-    }
-    network_interface = {
+      }]
+    }]
+    network_interface = [{
       network = "default"
-    }
+    }]
     shielded_instance_config = null
   }
 }
@@ -63,14 +63,14 @@ resource "google_compute_instance" "pass_partial_shielded_config_uses_defaults" 
   attrs = {
     name         = "pass-partial-shielded-config"
     machine_type = "e2-micro"
-    boot_disk = {
-      initialize_params = {
+    boot_disk = [{
+      initialize_params = [{
         image = "debian-cloud/debian-12"
-      }
-    }
-    network_interface = {
+      }]
+    }]
+    network_interface = [{
       network = "default"
-    }
+    }]
     shielded_instance_config = [{
       enable_secure_boot = true
     }]
@@ -82,14 +82,14 @@ resource "google_compute_instance" "fail_vtpm_disabled" {
   attrs = {
     name         = "fail-vtpm-disabled"
     machine_type = "e2-micro"
-    boot_disk = {
-      initialize_params = {
+    boot_disk = [{
+      initialize_params = [{
         image = "debian-cloud/debian-12"
-      }
-    }
-    network_interface = {
+      }]
+    }]
+    network_interface = [{
       network = "default"
-    }
+    }]
     shielded_instance_config = [{
       enable_vtpm                 = false
       enable_integrity_monitoring = true
@@ -103,14 +103,14 @@ resource "google_compute_instance" "fail_integrity_monitoring_disabled" {
   attrs = {
     name         = "fail-integrity-monitoring-disabled"
     machine_type = "e2-micro"
-    boot_disk = {
-      initialize_params = {
+    boot_disk = [{
+      initialize_params = [{
         image = "debian-cloud/debian-12"
-      }
-    }
-    network_interface = {
+      }]
+    }]
+    network_interface = [{
       network = "default"
-    }
+    }]
     shielded_instance_config = [{
       enable_vtpm                 = true
       enable_integrity_monitoring = false
@@ -126,14 +126,14 @@ resource "google_compute_instance" "fail_secure_boot_disabled" {
   attrs = {
     name         = "fail-secure-boot-disabled"
     machine_type = "e2-micro"
-    boot_disk = {
-      initialize_params = {
+    boot_disk = [{
+      initialize_params = [{
         image = "debian-cloud/debian-12"
-      }
-    }
-    network_interface = {
+      }]
+    }]
+    network_interface = [{
       network = "default"
-    }
+    }]
     shielded_instance_config = [{
       enable_vtpm                 = true
       enable_integrity_monitoring = true

@@ -48,7 +48,11 @@ resource_policy "google_compute_instance" "require_confidential_computing" {
     confidential_enabled  = local.confidential_enabled_raw == null ? false : local.confidential_enabled_raw
     confidential_type_raw = core::try(local.confidential_config_raw.confidential_instance_type, null)
     confidential_type     = local.confidential_type_raw == null ? "" : local.confidential_type_raw
-    is_compliant          = local.confidential_config_raw != null && (local.confidential_enabled == true || core::contains(["SEV", "SEV_SNP", "TDX"], local.confidential_type))
+    # Either field alone enables Confidential Computing, so the disjunction is
+    # deliberate. The provider marshals the deprecated boolean with "omitempty",
+    # so an explicit false is dropped from the API request while the type is
+    # still sent, and GCP creates a Confidential VM anyway.
+    is_compliant = local.confidential_config_raw != null && (local.confidential_enabled == true || core::contains(["SEV", "SEV_SNP", "TDX"], local.confidential_type))
   }
 
   enforcement_level = input.confidential-vm-enforcement-level
