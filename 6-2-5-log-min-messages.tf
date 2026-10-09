@@ -1,0 +1,132 @@
+# Test resources for policies/30/6-2-5-log-min-messages.policy.hcl
+#
+# Shared infrastructure (KMS keys, policy-test-vpc, subnet) comes from prerequisites.tf.
+# Every instance is otherwise compliant with all 6.x controls (baseline flags,
+# private IP only, ENCRYPTED_ONLY SSL, backups on), so each fail_* resource
+# violates only this control. Cloud SQL instances take minutes to create.
+#
+# fail_log_min_messages_notice  -> violates the policy ('log_min_messages' = 'notice')
+# pass_log_min_messages_warning -> complies with the policy ('log_min_messages' = 'warning', case-insensitive)
+# pass_log_min_messages_unset   -> complies with the policy (flag unset; the default is compliant)
+
+resource "google_sql_database_instance" "fail_log_min_messages_notice" {
+  name                = "fail-log-min-messages-notice"
+  database_version    = "POSTGRES_15"
+  instance_type       = "CLOUD_SQL_INSTANCE"
+  region              = "us-central1"
+  deletion_protection = false
+
+  settings {
+    tier = "db-f1-micro"
+    database_flags {
+      name  = "log_connections"
+      value = "on"
+    }
+    database_flags {
+      name  = "log_disconnections"
+      value = "on"
+    }
+    database_flags {
+      name  = "cloudsql.enable_pgaudit"
+      value = "on"
+    }
+    database_flags {
+      name  = "log_statement"
+      value = "ddl"
+    }
+    database_flags {
+      name  = "log_min_messages"
+      value = "notice"
+    }
+    ip_configuration {
+      ipv4_enabled    = false
+      private_network = "projects/${var.project_id}/global/networks/policy-test-vpc"
+      ssl_mode        = "ENCRYPTED_ONLY"
+    }
+    backup_configuration {
+      enabled = true
+    }
+  }
+
+  depends_on = [time_sleep.prerequisites_ready]
+}
+
+resource "google_sql_database_instance" "pass_log_min_messages_warning" {
+  name                = "pass-log-min-messages-warning"
+  database_version    = "POSTGRES_15"
+  instance_type       = "CLOUD_SQL_INSTANCE"
+  region              = "us-central1"
+  deletion_protection = false
+
+  settings {
+    tier = "db-f1-micro"
+    database_flags {
+      name  = "log_connections"
+      value = "on"
+    }
+    database_flags {
+      name  = "log_disconnections"
+      value = "on"
+    }
+    database_flags {
+      name  = "cloudsql.enable_pgaudit"
+      value = "on"
+    }
+    database_flags {
+      name  = "log_statement"
+      value = "ddl"
+    }
+    database_flags {
+      name  = "log_min_messages"
+      value = "warning"
+    }
+    ip_configuration {
+      ipv4_enabled    = false
+      private_network = "projects/${var.project_id}/global/networks/policy-test-vpc"
+      ssl_mode        = "ENCRYPTED_ONLY"
+    }
+    backup_configuration {
+      enabled = true
+    }
+  }
+
+  depends_on = [time_sleep.prerequisites_ready]
+}
+
+resource "google_sql_database_instance" "pass_log_min_messages_unset" {
+  name                = "pass-log-min-messages-unset"
+  database_version    = "POSTGRES_15"
+  instance_type       = "CLOUD_SQL_INSTANCE"
+  region              = "us-central1"
+  deletion_protection = false
+
+  settings {
+    tier = "db-f1-micro"
+    database_flags {
+      name  = "log_connections"
+      value = "on"
+    }
+    database_flags {
+      name  = "log_disconnections"
+      value = "on"
+    }
+    database_flags {
+      name  = "cloudsql.enable_pgaudit"
+      value = "on"
+    }
+    database_flags {
+      name  = "log_statement"
+      value = "ddl"
+    }
+    ip_configuration {
+      ipv4_enabled    = false
+      private_network = "projects/${var.project_id}/global/networks/policy-test-vpc"
+      ssl_mode        = "ENCRYPTED_ONLY"
+    }
+    backup_configuration {
+      enabled = true
+    }
+  }
+
+  depends_on = [time_sleep.prerequisites_ready]
+}

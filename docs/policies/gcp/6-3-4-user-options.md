@@ -1,0 +1,53 @@
+# Ensure 'user options' Database Flag for Cloud SQL SQL Server Instance Is Not Configured
+
+| Provider | Category |
+| -------- | -------- |
+| Google Cloud Platform | Database security |
+
+## Description
+
+This control checks that Cloud SQL for SQL Server instances (`google_sql_database_instance` with a `SQLSERVER` `database_version`) do not set the `user options` database flag. Read replicas are evaluated too, because database flags are not inherited from the primary.
+
+`user options` sets global defaults for every user session, such as ANSI and transaction behavior. Changing these globally can alter query semantics in ways that individual applications and administrators do not expect, so the flag should remain unset.
+
+This rule is covered by the [6-3-4-user-options](https://github.com/hashicorp/prewritten-terraform-policy-library/blob/main/policies/gcp/sql/6-3-4-user-options.policy.hcl) policy.
+
+## Policy Results
+
+```bash
+trace:
+   # 6-3-4-user-options.policytest.hcl... 
+   running
+   # resource.google_sql_database_instance.fail_16... 
+   running
+   # resource.google_sql_database_instance.fail_16... 
+   pass
+   # resource.google_sql_database_instance.fail_0... 
+   running
+   # resource.google_sql_database_instance.fail_0... 
+   pass
+   # resource.google_sql_database_instance.pass_flag_absent... 
+   running
+   # resource.google_sql_database_instance.pass_flag_absent... 
+   pass
+   # resource.google_sql_database_instance.pass_no_database_flags... 
+   running
+   # resource.google_sql_database_instance.pass_no_database_flags... 
+   pass
+   # resource.google_sql_database_instance.fail_non_compliant_among_other_flags... 
+   running
+   # resource.google_sql_database_instance.fail_non_compliant_among_other_flags... 
+   pass
+   # resource.google_sql_database_instance.pass_other_engine_out_of_scope... 
+   running
+   # resource.google_sql_database_instance.pass_other_engine_out_of_scope... 
+   pass
+   # resource.google_sql_database_instance.fail_read_replica_16... 
+   running
+   # resource.google_sql_database_instance.fail_read_replica_16... 
+   pass
+   # 6-3-4-user-options.policytest.hcl... 
+   pass
+```
+
+---
