@@ -1,0 +1,59 @@
+# Ensure That Cloud SQL Database Instances Are Configured With Automated Backups
+
+| Provider | Category | CIS Control (GCP v5.0.0) |
+| -------- | -------- | ------------------------ |
+| Google Cloud Platform | Backups enabled | 6.8 |
+
+## Description
+
+This control checks that primary `google_sql_database_instance` resources set `settings.backup_configuration.enabled` to `true`. Automated backups are not configured by default, so omitting the block fails. Read replicas and read pools are excluded through `instance_type` (or `master_instance_name` when `instance_type` is not set), because Cloud SQL does not support backups on replicas; set `instance_type` explicitly so that the result is known during a plan instead of reported as unknown.
+
+This policy evaluates standard Cloud SQL automated backups. [Enhanced backups managed through Backup and DR](https://cloud.google.com/sql/docs/mysql/backup-recovery/manage-enhanced-backups) use separate backup-plan associations and schedules, which this policy does not inspect. An instance protected only through that alternative can therefore be reported as non-compliant by this standard-backup check.
+
+Automated backups make it possible to recover from accidental deletion, corruption, or ransomware. Without them, an instance cannot be restored to an earlier point in time.
+
+This rule is covered by the [cloudsql-automated-backups-enabled](https://github.com/hashicorp/prewritten-terraform-policy-library/blob/main/policies/gcp/sql/cloudsql-automated-backups-enabled.policy.hcl) policy.
+
+## Policy Results
+
+```bash
+trace:
+   # cloudsql-automated-backups-enabled.policytest.hcl...
+   running
+   # resource.google_sql_database_instance.pass_backups_enabled...
+   running
+   # resource.google_sql_database_instance.pass_backups_enabled...
+   pass
+   # resource.google_sql_database_instance.fail_backups_disabled...
+   running
+   # resource.google_sql_database_instance.fail_backups_disabled...
+   pass
+   # resource.google_sql_database_instance.fail_no_backup_configuration...
+   running
+   # resource.google_sql_database_instance.fail_no_backup_configuration...
+   pass
+   # resource.google_sql_database_instance.fail_backup_enabled_unset...
+   running
+   # resource.google_sql_database_instance.fail_backup_enabled_unset...
+   pass
+   # resource.google_sql_database_instance.pass_read_replica_out_of_scope...
+   running
+   # resource.google_sql_database_instance.pass_read_replica_out_of_scope...
+   pass
+   # resource.google_sql_database_instance.pass_read_replica_instance_type_out_of_scope...
+   running
+   # resource.google_sql_database_instance.pass_read_replica_instance_type_out_of_scope...
+   pass
+   # resource.google_sql_database_instance.fail_primary_instance_type_backups_disabled...
+   running
+   # resource.google_sql_database_instance.fail_primary_instance_type_backups_disabled...
+   pass
+   # resource.google_sql_database_instance.pass_read_pool_out_of_scope...
+   running
+   # resource.google_sql_database_instance.pass_read_pool_out_of_scope...
+   pass
+   # cloudsql-automated-backups-enabled.policytest.hcl...
+   pass
+```
+
+---

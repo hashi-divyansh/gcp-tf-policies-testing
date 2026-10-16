@@ -1,0 +1,53 @@
+# Ensure 'user Connections' Database Flag for Cloud SQL SQL Server Instance Is Set to a Non-limiting Value
+
+| Provider | Category | CIS Control (GCP v5.0.0) |
+| -------- | -------- | ------------------------ |
+| Google Cloud Platform | Database security | 6.3.3 |
+
+## Description
+
+This control checks that Cloud SQL for SQL Server instances (`google_sql_database_instance` with a `SQLSERVER` `database_version`) set the `user connections` database flag to `0` (no fixed limit), if it is set. Values are compared case-insensitively. If the flag is not set, the instance passes because the engine default is compliant. Read replicas are evaluated too, because database flags are not inherited from the primary. Database Migration Service connection profiles are not checked because their Cloud SQL destination supports only MySQL and PostgreSQL versions.
+
+`user connections` caps the number of simultaneous user connections. A fixed limit can be exhausted by an attacker or a misbehaving client and block legitimate users; leaving it at `0` lets SQL Server size connections dynamically.
+
+This rule is covered by the [cloudsql-sqlserver-user-connections-non-limiting](https://github.com/hashicorp/prewritten-terraform-policy-library/blob/main/policies/gcp/sql/cloudsql-sqlserver-user-connections-non-limiting.policy.hcl) policy.
+
+## Policy Results
+
+```bash
+trace:
+   # cloudsql-sqlserver-user-connections-non-limiting.policytest.hcl...
+   running
+   # resource.google_sql_database_instance.pass_0...
+   running
+   # resource.google_sql_database_instance.pass_0...
+   pass
+   # resource.google_sql_database_instance.fail_100...
+   running
+   # resource.google_sql_database_instance.fail_100...
+   pass
+   # resource.google_sql_database_instance.pass_flag_absent...
+   running
+   # resource.google_sql_database_instance.pass_flag_absent...
+   pass
+   # resource.google_sql_database_instance.pass_no_database_flags...
+   running
+   # resource.google_sql_database_instance.pass_no_database_flags...
+   pass
+   # resource.google_sql_database_instance.fail_non_compliant_among_other_flags...
+   running
+   # resource.google_sql_database_instance.fail_non_compliant_among_other_flags...
+   pass
+   # resource.google_sql_database_instance.pass_other_engine_out_of_scope...
+   running
+   # resource.google_sql_database_instance.pass_other_engine_out_of_scope...
+   pass
+   # resource.google_sql_database_instance.fail_read_replica_100...
+   running
+   # resource.google_sql_database_instance.fail_read_replica_100...
+   pass
+   # cloudsql-sqlserver-user-connections-non-limiting.policytest.hcl...
+   pass
+```
+
+---
